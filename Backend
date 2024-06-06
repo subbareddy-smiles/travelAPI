@@ -1,1 +1,55 @@
+typescript
+import { Controller, Post, Body, Headers, Res } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { Response } from 'express';
+import { firstValueFrom } from 'rxjs';
 
+@Controller()
+export class AppController {
+  constructor(private readonly httpService: HttpService) {}
+
+  @Post('/duffel-flights-search')
+  async searchFlights(
+    @Body() body: any,
+    @Headers('Authorization') authHeader: string,
+    @Res() res: Response
+  ) {
+    const headers = {
+      'Accept-Encoding': 'gzip',
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Duffel-Version': 'v1',
+      'Authorization': authHeader,
+    };
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post('https://api.duffel.com/air/offer_requests', body, { headers })
+      );
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      console.error(error);
+      res.status(error.response?.status || 500).json(error.response?.data || { message: 'Internal server error' });
+    }
+  }
+}
+
+import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
+import { AppController } from './app.controller';
+
+@Module({
+  imports: [HttpModule],
+  controllers: [AppController],
+})
+export class AppModule {}
+
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.enableCors();
+  await app.listen(5000);
+}
+bootstrap();
