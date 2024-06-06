@@ -1,1 +1,108 @@
+// Import necessary libraries
+import React, { useState } from 'react';
 
+// Define the main component
+const FlightSearchForm = () => {
+  // Define state variables
+  const [origin, setOrigin] = useState('');
+  const [destination, setDestination] = useState('');
+  const [departureDate, setDepartureDate] = useState('');
+  const [passengerType, setPassengerType] = useState('adult');
+  const [loading, setLoading] = useState(false);
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const requestData = {
+      data: {
+        slices: [
+          {
+            origin,
+            destination,
+            departure_date: departureDate,
+          },
+        ],
+        passengers: [
+          {
+            type: passengerType,
+          },
+        ],
+      },
+    };
+
+    try {
+      const response = await fetch('http://localhost:5000/duffel-flights-search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      const result = await response.json();
+      console.log(result);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div>
+        <label htmlFor="origin">Origin:</label>
+        <input
+          type="text"
+          id="origin"
+          value={origin}
+          onChange={(e) => setOrigin(e.target.value)}
+          required
+        />
+      </div>
+      <div>
+        <label htmlFor="destination">Destination:</label>
+        <input
+          type="text"
+          id="destination"
+          value={destination}
+          onChange={(e) => setDestination(e.target.value)}
+          required
+        />
+      </div>
+      <div>
+        <label htmlFor="departureDate">Departure Date:</label>
+        <input
+          type="date"
+          id="departureDate"
+          value={departureDate}
+          onChange={(e) => setDepartureDate(e.target.value)}
+          required
+        />
+      </div>
+      <div>
+        <label htmlFor="passengerType">Passenger Type:</label>
+        <select
+          id="passengerType"
+          value={passengerType}
+          onChange={(e) => setPassengerType(e.target.value)}
+          required
+        >
+          <option value="adult">Adult</option>
+          <option value="child">Child</option>
+          <option value="infant_without_seat">Infant without seat</option>
+        </select>
+      </div>
+      <div>
+        <button type="submit" disabled={loading}>
+          {loading ? 'Loading...' : 'Search Flights'}
+        </button>
+      </div>
+    </form>
+  );
+};
+
+export default FlightSearchForm;
+//
